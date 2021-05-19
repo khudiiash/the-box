@@ -73,13 +73,13 @@ export const showMessage = (message) => {
 
 }
 export const limitBodyVelocity = (body, limit) => {
-    if (body.velocity.x > limit) body.velocity.x = limit
+    if (body.velocity.x > limit / 4) body.velocity.x = limit / 4
     if (body.velocity.y > limit) body.velocity.y = limit
-    if (body.velocity.z > limit) body.velocity.z = limit
+    if (body.velocity.z > limit / 4) body.velocity.z = limit / 4
 
-    if (body.velocity.x < -limit) body.velocity.x = -limit
+    if (body.velocity.x < -limit / 4) body.velocity.x = -limit / 4
     if (body.velocity.y < -limit) body.velocity.y = -limit
-    if (body.velocity.z < -limit) body.velocity.z = -limit
+    if (body.velocity.z < -limit / 4) body.velocity.z = -limit / 4
 
 }
 

@@ -381,7 +381,6 @@ function startGame() {
                 block.body.position.z += Math.sin((elapsedTime * .6) - block.yIndex) * block.yIndex * 0
             })
 
-            limitBodyVelocity(cube.body, 25)
             followCube()
         } else {
         camera.lookAt(cube.mesh.position)
@@ -398,7 +397,7 @@ function startGame() {
 
         cube.mesh.rotation.y = elapsedTime
     }
-
+    limitBodyVelocity(cube.body, 25)
     objectsToUpdate.map(object => {
         object.mesh.position.copy(object.body.position)
         object.mesh.quaternion.copy(object.body.quaternion)
@@ -412,6 +411,7 @@ function startGame() {
     world.step(1/60, deltaTime * gameSpeed, 3)
     // controls.update()
     renderer.render(scene, camera)
+    showMessage(Math.round(cube.body.velocity.x) + ',' + Math.round(cube.body.velocity.y) + ',' +Math.round(cube.body.velocity.z) )
 
 
 
@@ -421,10 +421,10 @@ function startGame() {
         if (keyPressed || cube.dead || cube.win || Math.abs(cube.body.velocity.y) > 3) return
         keyPressed = true
         cube.body.applyImpulse(new CANNON.Vec3(0,0,0))
-        if (/a|ф/i.test(e.key)) cube.body.velocity.x = -force
-        if (/d|в/i.test(e.key)) cube.body.velocity.x = force
-        if (/w|ц/i.test(e.key)) cube.body.velocity.z = -force
-        if (/s|ы/i.test(e.key)) cube.body.velocity.z = force
+        if (/^(a|ф|ArrowLeft)$/i.test(e.key)) cube.body.velocity.x = -force
+        if (/^(d|в|ArrowRight)$/i.test(e.key)) cube.body.velocity.x = force
+        if (/^(w|ц|ArrowUp)$/i.test(e.key)) cube.body.velocity.z = -force
+        if (/^(s|ы|ArrowDown)$/i.test(e.key)) cube.body.velocity.z = force
     }
 
 
