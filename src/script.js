@@ -424,23 +424,10 @@ function startGame() {
         if (keyPressed || cube.dead || cube.win) return
         keyPressed = true
         cube.body.applyImpulse(new CANNON.Vec3(0,0,0))
-        switch (e.key) {
-            case 'a':
-                cube.body.velocity.x = -force
-                break
-            case 'd':
-                cube.body.velocity.x = force
-                break
-            case 'w':
-                cube.body.velocity.z = -force
-                break
-            case 's':
-                cube.body.velocity.z = force
-                break
-            case ' ':
-                if (cube.body.velocity.y < 10 && cube.body.velocity.y > 0) cube.body.velocity.y = force * 3
-                break
-        }
+        if (/a|ф/i.test(e.key)) cube.body.velocity.x = -force
+        if (/d|в/i.test(e.key)) cube.body.velocity.x = force
+        if (/w|ц/i.test(e.key)) cube.body.velocity.z = -force
+        if (/s|ы/i.test(e.key)) cube.body.velocity.z = force
     }
 
 
