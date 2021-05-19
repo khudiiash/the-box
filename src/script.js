@@ -4,9 +4,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import {createBodyFromMesh, limitBodyVelocity, resize, add, showMessage} from './helpers'
-import * as dat from 'dat.gui'
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import gsap from 'gsap'
+import controlsImage from './controls.png'
 
 
 import './style.css'
@@ -31,7 +31,7 @@ export const sizes = {
 const canvas = document.querySelector('.webgl')
 let loop;
 
-const gui = new dat.GUI()
+// const gui = new dat.GUI()
 const params = {color: '#86A790', fogFar: 85, fogNear: 10}
 export let scene = new THREE.Scene()
 export let camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000)
@@ -65,7 +65,6 @@ function startGame() {
     document.querySelector('body').style.backgroundColor = params.color
     document.querySelector('.title').style.fontSize = '100px'
 
-
     if (music.paused) music.play()
 
     document.querySelector('.sound-toggle').onclick = () => 
@@ -91,7 +90,7 @@ function startGame() {
     window.onresize = resize
     const stats = new Stats()
     // document.body.appendChild( stats.dom );
-    gsap.to('.button, .glass, .title', {autoAlpha: 0})
+    gsap.to('.button, .glass, .title, .controls', {autoAlpha: 0})
     gsap.to('.hp-active', {scale: 1, width: '100%'})
 
 
@@ -114,18 +113,6 @@ function startGame() {
     spotLight.position.set(5,7.7,18);
     scene.add(spotLight)
 
-    // const spotLightHelper = new THREE.SpotLightHelper(spotLight)
-    // scene.add(spotLightHelper)
-
-
-    
-
-
-    gui.addColor(params, 'color').onChange(() => {scene.fog.color.set(params.color);renderer.setClearColor(params.color)})
-    // gui.add(params, 'fogNear').min(0).max(100).step(.1).onChange(() => scene.fog.near = params.fogNear)
-    // gui.add(params, 'fogFar').min(0).max(100).step(.1).onChange(() => scene.fog.far = params.fogFar)
-
-    // gui.add()
     // Fog
     {
        
@@ -279,13 +266,6 @@ function startGame() {
     const blocksN = 45
     let x = 0, y = 0, z = 0;
 
-
-    gui.add(spotLight, 'intensity').min(0).max(5).step(0.01)
-    gui.add(spotLight.position, 'x').min(-20).max(20).step(0.1)
-    gui.add(spotLight.position, 'y').min(-20).max(20).step(0.1)
-    gui.add(spotLight.position, 'z').min(-20).max(20).step(0.1)
-    gui.hide()
-
     const blockMaterial = new THREE.MeshStandardMaterial({
         color: '#222'
     })
@@ -332,7 +312,6 @@ function startGame() {
     const count = 200000
     
     const positions = new Float32Array(count * 3)
-    // const colors = new Float32Array(count * 3)
     
     for (let i = 0; i < count * 3; i ++) {
         positions[i] = (Math.random() - 0.5) * 500
@@ -480,8 +459,10 @@ function startGame() {
 }
 document.addEventListener('DOMContentLoaded', ()=> {
     document.querySelector('.button').onclick = startGame
+    document.querySelector('.controls').style.backgroundImage = `url(${controlsImage})`
     gsap.timeline()
         .set('.title', {fontSize: '100px'})
         .fromTo('.title, .button', 1, {y: 25, opacity: 0} ,{ opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .5})
+        .to('.controls', 1, {opacity: .3})
 })
 

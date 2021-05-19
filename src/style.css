@@ -101,3 +101,14 @@ body, html {
     left: 20px;
     top: 20px;
 }
+
+.controls {
+    width: 400px;
+    left: calc(50% - 200px);
+    top: 65%;
+    opacity: .1;
+    height: 250px;
+    position: absolute;
+    background-size: cover;
+    opacity: 0;
+}
