@@ -80,7 +80,7 @@ function startGame() {
         }
 
     let gameSpeed = 2;
-    let complexity = 2;
+    let complexity = 1.4;
     camera.position.z = 20;
     camera.position.y = 10;
     renderer.shadowMap.enabled = true;
@@ -209,7 +209,7 @@ function startGame() {
 
         if (block.last && !cube.dead) {
             cube.win = true
-            document.querySelector('.title').innerHTML = `YOU WIN!<br>BOX IS ${cube.health / 1000 * 100}% WHOLE`
+            document.querySelector('.title').innerHTML = `YOU WIN!<br>BOX IS ${Math.round(cube.health / 1000 * 100)}% WHOLE`
             document.querySelector('.title').style.fontSize = '50px'
             document.querySelector('.button').innerText = 'PLAY AGAIN'
 
@@ -263,11 +263,14 @@ function startGame() {
 
     spotLight.target = cube.mesh
     const blocks = []
-    const blocksN = 45
+    const blocksN = 40
     let x = 0, y = 0, z = 0;
 
     const blockMaterial = new THREE.MeshStandardMaterial({
         color: '#222'
+    })
+    const lastMaterial = new THREE.MeshStandardMaterial({
+        color: '#67BA87'
     })
 
     for (let i = 0; i < blocksN; i ++) {
@@ -280,8 +283,8 @@ function startGame() {
         let last = false;
         if (i === blocksN - 1) {
             height = 1
-            width = 30
-            depth = 30,
+            width = 50
+            depth = 50,
             last = true
         }
         if (i === 0) {
@@ -294,10 +297,9 @@ function startGame() {
             depth: depth, 
             position: {x, y, z}, 
             yIndex: (Math.random() - 0.5) * .1,
-            //color: i < (blocksN - 1) ? colors[Math.floor(Math.random() * colors.length)] : 'rgb(100,255,100)',
             color: i < (blocksN - 1) ? '#222' : '#fff',
             last,
-            material: blockMaterial,
+            material: last ? lastMaterial : blockMaterial,
             type: 'block',
             id: i
         })
@@ -345,7 +347,6 @@ function startGame() {
 
 
     const followCube = () => {
-        showMessage(camera.shake)
         if (!camera.shake) camera.position.set(cube.mesh.position.x, cube.mesh.position.y + 10, cube.mesh.position.z + 30)
         if (!camera.shake) camera.lookAt(cube.mesh.position)
         spotLight.position.set(cube.mesh.position.x + 10, cube.mesh.position.y + 10,  cube.mesh.position.z + 5)
@@ -357,8 +358,6 @@ function startGame() {
         oldElapsedTime = elapsedTime
 
        
-        // showMessage(bubbles[0].mesh.position.y, elapsedTime)
-
         particles.position.y -= 0.01
         particles.rotation.y = elapsedTime * 0.05
         particles.rotation.z = elapsedTime * 0.05
@@ -370,7 +369,6 @@ function startGame() {
         if (colorNumber > cube.backgroundColor) {
             cube.backgroundColor = colorNumber
             gsap.to('body', 3, {backgroundColor: colors[colorNumber], onUpdate: function() {
-                console.log(this.targets()[0].style.backgroundColor)
                 renderer.setClearColor(this.targets()[0].style.backgroundColor)
                 scene.fog.color = new THREE.Color(this.targets()[0].style.backgroundColor)
             }})
@@ -383,7 +381,7 @@ function startGame() {
                 block.body.position.z += Math.sin((elapsedTime * .6) - block.yIndex) * block.yIndex * 0
             })
 
-            limitBodyVelocity(cube.body, 15)
+            limitBodyVelocity(cube.body, 25)
             followCube()
         } else {
         camera.lookAt(cube.mesh.position)
@@ -397,7 +395,6 @@ function startGame() {
         cube.body.velocity.x = 0
         cube.body.velocity.z = 0
         cube.body.velocity.y = 4
-
 
         cube.mesh.rotation.y = elapsedTime
     }
@@ -421,7 +418,7 @@ function startGame() {
     }
 
     document.onkeydown = e => {
-        if (keyPressed || cube.dead || cube.win) return
+        if (keyPressed || cube.dead || cube.win || Math.abs(cube.body.velocity.y) > 3) return
         keyPressed = true
         cube.body.applyImpulse(new CANNON.Vec3(0,0,0))
         if (/a|ф/i.test(e.key)) cube.body.velocity.x = -force
