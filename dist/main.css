@@ -1,0 +1,104 @@
+@import url(https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap);
+body, html {
+    margin: 0;
+    background: #555;
+}
+.webgl {
+    width: 0;
+    height: 0;
+}
+.hp {
+    width: 300px;
+    height: 30px;
+    border: 1px solid black;
+    overflow: hidden;
+    border-radius: 7px;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+}
+.hp-active {
+    width: 100%;
+    height: 100%;
+    background: red;
+    transition: width .4s ease-out;
+    transform-origin: right center;
+    transform: scale(0);
+}
+.hp-damage {
+    font-size: 40px;
+    width: 100%;
+    text-align: center;
+    position: fixed;
+    left: 0;
+    top: 40%;
+
+    opacity: 0;
+}
+.glass {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,.8)
+}
+
+.button {
+    position: fixed;
+    width: 400px;
+    height: 100px;
+    background: rgba(255,0,0,1);
+    box-shadow: 0 5px 25px rgba(170, 12, 12, 0.2);
+    color: rgb(255, 213, 213);
+    font-family: "Chakra Petch", sans-serif;
+    font-size: 20px;
+    letter-spacing: 15px;
+    left: calc(50% - 200px);
+    top: 50%;
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: .1s;
+    opacity: 0;
+}
+.button:hover {
+    box-shadow: 0 5px 25px rgba(255, 0, 0, 0.43);
+}
+
+.title {
+    position: fixed;
+    width: 100%;
+    text-align: center;
+    font-size: 100px;
+    top: 30%;
+    left: 0;
+}
+
+.red-type {
+    font-family: 'Chakra Petch', sans-serif;
+    color: red;
+}
+
+.vignette {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    box-shadow: inset 0 0 150px rgba(0,0,0,.5);
+    pointer-events: none;
+}
+
+.sound-toggle {
+    width: 40px;
+    height: 40px;
+    position: fixed;
+    left: 20px;
+    top: 20px;
+}
+
+/*# sourceMappingURL=main.css.map*/
