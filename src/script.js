@@ -619,9 +619,10 @@ document.addEventListener('DOMContentLoaded', ()=> {
             closeFullscreen()
         }
     }
-    if (mobile) gsap.to('.full-screen', {opacity: 0})
-    gsap.timeline()
-        .fromTo('.title, .button', 1, {y: 25, opacity: 0} ,{ opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
-        .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
+    if (mobile) gsap.set('.full-screen', {opacity: 0})
+   
 })
+gsap.timeline()
+    .fromTo('.title, .button', 1, {y: 25, opacity: 0}, { opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
+    .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
 
