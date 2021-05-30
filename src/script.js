@@ -82,7 +82,7 @@ function startGame() {
     }
 
     scene = new THREE.Scene()
-    camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 1, 300)
+    camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 1, 1000)
     renderer = new THREE.WebGLRenderer({ canvas,
         antialias: AA,
         powerPreference: "high-performance"
@@ -143,11 +143,11 @@ function startGame() {
     // Resize
     const spotLight = new THREE.DirectionalLight(0xffffff, 1)
     spotLight.shadow.camera.near = 8;
-    spotLight.shadow.camera.far = 40;
-    spotLight.shadow.mapSize.width = 512;
-    spotLight.shadow.mapSize.height = 512;
-    spotLight.shadow.bias = - 0.002;
-    spotLight.shadow.radius = 1;
+    spotLight.shadow.camera.far = 100;
+    spotLight.shadow.mapSize.width = 64;
+    spotLight.shadow.mapSize.height = 64;
+    spotLight.shadow.bias = -0.0001;
+    spotLight.shadow.radius = 15;
     spotLight.castShadow = true;
     spotLight.position.set(5,7.7,18);
     scene.add(spotLight)
@@ -166,16 +166,18 @@ function startGame() {
     
     // Background
     const bg = new THREE.Mesh(
-        new THREE.SphereBufferGeometry(100, 100, 100),
+        new THREE.SphereBufferGeometry(160, 128, 128),
         bgMat
     )
 
     bg.rotation.y = Math.PI / 2
+
+
     scene.add(bg)
 
     // Fog
     {
-        scene.fog = new THREE.Fog('#000', 5, 120);
+        scene.fog = new THREE.Fog('#0F6576', 5, 120);
     }
     const sides = []
     let lastBlock = 0;
@@ -351,7 +353,7 @@ function startGame() {
         )
 
         block.position.set(x,y,z)
-        block.castShadow = true 
+        // block.castShadow = true 
         block.receiveShadow = true 
 
         if (i === 20) {
@@ -568,6 +570,8 @@ function startGame() {
         particles.rotation.y = elapsedTime * 0.05
         particles.rotation.z = elapsedTime * 0.05
 
+        bg.rotation.y = elapsedTime * .05
+
        if (joystick && joystick.getDir()) keyHandler(joystick.getDir())
        if (joystick && !joystick.getDir()) {
             cubeV[0] = 0
@@ -581,17 +585,11 @@ function startGame() {
         if (!cube.dead) {
             followCube()
 
-            } else {
-                camera.position.x += Math.sin(elapsedTime * .1) * .1 
-                camera.position.z += elapsedTime * .03
-            }
-        if (cube.win) {
-            // cube.mesh.rotation.y = elapsedTime
-            // cube.mesh.position.y = '-=.05'
-
+        } else {
+            camera.position.x += Math.sin(elapsedTime * .1) * .1 
+            if (camera.position.z < 500) camera.position.z += .05
+            camera.rotation.x += 0.0001
         }
-    
-
 
     stats.update()
 

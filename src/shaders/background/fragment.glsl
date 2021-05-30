@@ -13,7 +13,7 @@ vec2 rotateUV(vec2 uv, vec2 pivot, float rotation) {
     return uv;
 }
 void main() {
-    vec2 rotatedUV = rotateUV(v_uv, vec2(0.5), v_time * .5);
+    vec2 rotatedUV = rotateUV(v_uv, vec2(0.5), v_time * .3);
     float y = (v_cube_y * .001) - 30.2;
     float r = smoothstep(.1, .8, rotatedUV.x * cos(y));
     float g = smoothstep(.1, .4, rotatedUV.y * cos(y));

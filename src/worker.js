@@ -62,13 +62,15 @@ const defaultConcreteMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
     defaultMaterial,
     {
-        friction: 0.1,
-        restitution: .1
+        friction: 1,
+        restitution: .01,
+        contactEquationRelaxation: 4,
+        frictionEquationRelaxation: 1
     }
 )
 world.defaultContactMaterial = defaultConcreteMaterial
 const cubeShape = new CANNON.Box(new CANNON.Vec3(1, 0.01, 1))
-const cube = new CANNON.Body({mass: 1, material: defaultMaterial})
+const cube = new CANNON.Body({mass: 1, allowSleep: false, material: defaultMaterial})
 cube.addShape(cubeShape, new CANNON.Vec3(0, 1, 0))
 // Bottom
 cube.addShape(cubeShape, new CANNON.Vec3(0, -1, 0))
@@ -89,7 +91,7 @@ cube.addEventListener('collide', onCollide)
 const health = new CANNON.Body({mass: 0, shape: new CANNON.Box(new CANNON.Vec3(.5, .5, .5))})
 world.addBody(health)
 self.addEventListener('message', (event) => {
-    if (win && world.gravity.y < 0) world.gravity.y = 3
+    if (win && world.gravity.y < 0) world.gravity.y = 1
     const { blocksP, blocksS, cubeP, cubeQ, cubeV, sidesP, sidesQ, bubblesP, healthP, timeStep, elapsedTime } = event.data
     if (!blocks.length) {
         for (let i = 0; i < N; i++) {
@@ -101,7 +103,7 @@ self.addEventListener('message', (event) => {
             const y = blocksP[i * 3 + 1]
             const z = blocksP[i * 3 + 2]
             const shape = new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2))
-            const body = new CANNON.Body({ mass: 0 })
+            const body = new CANNON.Body({ mass: 0, material: defaultMaterial })
             body.addShape(shape)
             body.position.set(x,y,z)
             blocks.push(body)
@@ -121,6 +123,8 @@ self.addEventListener('message', (event) => {
             sides.push(side)
         })
     }
+
+
     
 
     if (!bubbles.length) {
@@ -189,8 +193,14 @@ self.addEventListener('message', (event) => {
             block.position.z += Math.sin((elapsedTime * .6) - yIndeces[i]) * yIndeces[i] * 1
         }
     })
+    if (bodiesAreInContact(cube, blocks[lastBlock])) {
+        const block = blocks[lastBlock]
+        if (block && blocksP[lastBlock * 3 + 0]) {
+            cube.position.x += block.position.x - blocksP[lastBlock * 3 + 0]
+            cube.position.z += block.position.z - blocksP[lastBlock * 3 + 2]
+        }
+    }
 
-    if (!anyVelocity(cube)) cube.applyImpulse(new CANNON.Vec3(0,0,0))
     // Copy the cannon.js data into the buffers
     if (blocksP) {
         for (let i = 0; i < blocks.length; i++) {
@@ -206,6 +216,7 @@ self.addEventListener('message', (event) => {
         if (cubeV[1]) cube.velocity.y = cubeV[1]
         if (cubeV[2]) cube.velocity.z = cubeV[2]
     }
+
 
     limitBodyVelocity(cube, 30)
     if (cubeP && cubeQ) {
@@ -237,8 +248,20 @@ self.addEventListener('message', (event) => {
         // [blocksP.buffer, cubeP.buffer, cubeQ.buffer,sidesP.buffer, sidesQ.buffer, bubblesP.buffer]
     )
     oldElapsedTime = elapsedTime;
+
+
 })
 
+
+function bodiesAreInContact(bodyA, bodyB){
+    for(var i=0; i<world.contacts.length; i++){
+        var c = world.contacts[i];
+        if((c.bi === bodyA && c.bj === bodyB) || (c.bi === bodyB && c.bj === bodyA)){
+            return true;
+        }
+    }
+    return false;
+}
 
 
 
