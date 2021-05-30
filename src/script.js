@@ -604,10 +604,8 @@ document.addEventListener('DOMContentLoaded', ()=> {
     }
     if (localStorage.bestScore) {
         document.querySelector('.best-score span').innerText = localStorage.bestScore
-        gsap.fromTo('.best-score', {opacity: 0, y: 25}, {opacity: 1, y: 0, delay: .3})
-    } else {
-        gsap.set('.best-score', {opacity: 0, delay: .3})
-    }
+        gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
+    } 
     gsap.to('.cube', 8, {rotateY: 360, rotateX: 360, repeat: -1, ease: 'linear'})
     gsap.to('.title img', 25, {rotate: 360, ease: 'linear', repeat: -1})
     document.querySelector('.title img').setAttribute('src', titleImage)
