@@ -582,49 +582,54 @@ function startGame() {
 
 
     stats.update()
-    
-    // world.step(1/60, deltaTime * gameSpeed, 1)
-    // controls.update()
+
     renderer.render(scene, camera)
     const end = performance.now()
-    // showMessage(Math.round((end - start)))
     }
 
     tick()
 }
 
-document.querySelector('.button').onclick = startGame
-if (isMobile()) {
-    joystick = new JoyStick('joyDiv');
-    Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
+
+function ready(fn) {
+    if (document.readyState != 'loading'){
+      fn();
     } else {
-        console.log('else')
-        document.querySelector('#joyDiv').style.display = 'none'
-    }
-if (localStorage.bestScore) {
-    document.querySelector('.best-score span').innerText = localStorage.bestScore
-    gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
-} 
-gsap.to('.cube', 8, {rotateY: 360, rotateX: 360, repeat: -1, ease: 'linear'})
-gsap.to('.title img', 25, {rotate: 360, ease: 'linear', repeat: -1})
-document.querySelector('.title img').setAttribute('src', titleImage)
-document.querySelector('.button img').setAttribute('src', startImage)
-document.querySelector('.full-screen img').setAttribute('src', fullScreenImage)
-document.querySelector('.full-screen').onclick = () => {
-    if (!document.fullscreenElement) {
-        openFullscreen()
-    }
-    else {
-        closeFullscreen()
+      document.addEventListener('DOMContentLoaded', fn);
     }
 }
-if (mobile) gsap.set('.full-screen', {opacity: 0})
-gsap.timeline()
-    .fromTo('.title, .button', 1, {y: 25, opacity: 0}, { opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
-    .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
+  
+ready(function() {
+    document.querySelector('.button').onclick = startGame
+    if (isMobile()) {
+        joystick = new JoyStick('joyDiv');
+        Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
+        } else {
+            document.querySelector('#joyDiv').style.display = 'none'
+        }
+        if (localStorage.bestScore) {
+            document.querySelector('.best-score span').innerText = localStorage.bestScore
+            gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
+        } 
+        gsap.to('.cube', 8, {rotateY: 360, rotateX: 360, repeat: -1, ease: 'linear'})
+        gsap.to('.title img', 25, {rotate: 360, ease: 'linear', repeat: -1})
+        document.querySelector('.title img').setAttribute('src', titleImage)
+        document.querySelector('.button img').setAttribute('src', startImage)
+        document.querySelector('.full-screen img').setAttribute('src', fullScreenImage)
+        document.querySelector('.full-screen').onclick = () => {
+            if (!document.fullscreenElement) {
+                openFullscreen()
+            }
+            else {
+                closeFullscreen()
+            }
+        }
+        if (mobile) gsap.set('.full-screen', {opacity: 0})
+        gsap.timeline()
+            .fromTo('.title, .button', 1, {y: 25, opacity: 0}, { opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
+            .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
+        console.log('loaded')
+  })
 
 
-
-
-console.log('done')
 
