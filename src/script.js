@@ -73,10 +73,11 @@ function startGame() {
     gsap.to('.hp', {opacity: 1})
 
 
-    if (isMobile()) {
+    if (isMobile() && !joystick) {
+        console.log('created joystick')
         joystick = new JoyStick('joyDiv');
         Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
-    } else {
+    } else if (!isMobile()) {
         document.querySelector('#joyDiv').style.display = 'none'
     }
 
@@ -240,7 +241,7 @@ function startGame() {
             sound.volume = volume
             sound.play()
             soundsPlaying += 1 
-            setTimeout(() => soundsPlaying -= 1, sound.duration)
+            setTimeout(() => soundsPlaying -= 1, 10)
         }
         
         if (!damage) return
