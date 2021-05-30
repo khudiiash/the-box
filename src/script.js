@@ -414,7 +414,7 @@ function startGame() {
     let oldElapsedTime = 0;
 
     let keyPressed = false;
-    let force = mobile ? 3 : 4;
+    let force = 4;
     const timeStep = 1 / 60
 
     const keyHandler = (key) => {
@@ -619,6 +619,7 @@ document.addEventListener('DOMContentLoaded', ()=> {
             closeFullscreen()
         }
     }
+    if (mobile) gsap.to('.full-screen', {opacity: 0})
     gsap.timeline()
         .fromTo('.title, .button', 1, {y: 25, opacity: 0} ,{ opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
         .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
