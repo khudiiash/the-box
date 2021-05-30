@@ -593,15 +593,14 @@ function startGame() {
     tick()
 }
 
-
 document.querySelector('.button').onclick = startGame
 if (isMobile()) {
     joystick = new JoyStick('joyDiv');
     Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
-
-} else {
-    document.querySelector('#joyDiv').style.display = 'none'
-}
+    } else {
+        console.log('else')
+        document.querySelector('#joyDiv').style.display = 'none'
+    }
 if (localStorage.bestScore) {
     document.querySelector('.best-score span').innerText = localStorage.bestScore
     gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
@@ -625,4 +624,7 @@ gsap.timeline()
     .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
 
 
+
+
+console.log('done')
 
