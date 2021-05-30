@@ -427,11 +427,10 @@ function startGame() {
     const keyHandler = (key) => {
         if (keyPressed || cube.dead || cube.win) return
         keyPressed = true
-        console.log(key)
-        if (/(a|ф|ArrowLeft)/i.test(key))  cubeV[0] = -force
-        if (/(d|в|ArrowRight)/i.test(key)) cubeV[0] = force
-        if (/(w|ц|ArrowUp)/i.test(key)) cubeV[2] = -force
-        if (/(s|ы|ArrowDown)/i.test(key)) cubeV[2] = force
+        if (/^[wasdцфыв]?(a|ф)[wasdцфыв]?$/i.test(key)) cubeV[0] = -force 
+        if (/^[wasdцфыв]?(s|ы)[wasdцфыв]?$/i.test(key)) cubeV[0] = force
+        if (/^[wasdцфыв]?(d|в)[wasdцфыв]?$/i.test(key)) cubeV[2] = -force
+        if (/^[wasdцфыв]?(w|ц)[wasdцфыв]?$/i.test(key)) cubeV[2] = force
         setTimeout(() => keyPressed = false, 10)
     }
 
