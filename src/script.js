@@ -2,26 +2,32 @@ import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js' 
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import {createBodyFromMesh, limitBodyVelocity, resize, add, showMessage} from './helpers'
+import {resize, isMobile, openFullscreen, closeFullscreen} from './helpers'
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import gsap from 'gsap'
-import controlsImage from './controls.png'
+import {JoyStick} from './libs/joy.js'
+import Cube from './shapes/Cube'
+import Health from './shapes/Health'
+import titleImage from './assets/images/title.png'
+import startImage from './assets/images/start.png'
+import fullScreenImage from './assets/images/full_screen.png'
+
+import particlesVertex from './shaders/particles/vertex.glsl'
+import particlesFragment from './shaders/particles/fragment.glsl'
+
+import bgVertex from './shaders/background/vertex.glsl'
+import bgFragment from './shaders/background/fragment.glsl'
 
 
 import './style.css'
-import Cube from './shapes/Cube'
-import Block from './shapes/Block'
-import Sphere from './shapes/Sphere'
-import ComplexCube from './shapes/ComplexCube'
-import PCSS from './shaders/shadows/PCSS.glsl'
-import PCSSGetShadow from './shaders/shadows/PCSSGetShadow.glsl'
+
+
 
 
 const LoadingManager = new THREE.LoadingManager()
 const modelLoader = new GLTFLoader(LoadingManager)
 const textureLoader = new THREE.TextureLoader(LoadingManager)
-
+let joystick = null
 modelLoader.setDRACOLoader(new DRACOLoader().setDecoderPath('/draco/'))
 const box_texture = textureLoader.load('/textures/box_texture.jpg')
 export const sizes = {
@@ -30,69 +36,93 @@ export const sizes = {
 }
 const canvas = document.querySelector('.webgl')
 let loop;
-
-// const gui = new dat.GUI()
-const params = {color: '#86A790', fogFar: 85, fogNear: 10}
-export let scene = new THREE.Scene()
-export let camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000)
-export let renderer = new THREE.WebGLRenderer({ canvas })
+let pixelRatio = window.devicePixelRatio
+let AA = true
+if (pixelRatio > 1) {
+    AA = false
+}
+export let scene
+export let camera 
+export let renderer
 export let objectsToUpdate = []
-export let world = new CANNON.World()
-export let defaultMaterial = new CANNON.Material('default')
 export let elapsedTime = 0;
 
 
 
 // Sounds
 
-const colors = [params.color, '#86A790', '#C87A90', '#0B7150', '#675B87', '#86A790']
 
 const boxSounds = Array(3).fill('').map((_,i) => new Audio(`/sounds/box_sound_${i + 1}.mp3`))
 const wasted = new Audio('/sounds/wasted.mp3')
 const music = new Audio('/sounds/sinatra.mp3')
-music.volume = .1   
+const healedSound = new Audio('/sounds/healed.mp3')
+const winSound = new Audio('/sounds/win.mp3')
+let soundsPlaying = 0
+const mobile = isMobile()
+music.volume = 0.1
+let workerProcess = null;
+let soundOff = false;
+
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 
 
 function startGame() {
 
+    gsap.set('img, .cube__face', {webkitFilter: 'invert(100%)', filter: 'invert(100%)'})
+    gsap.to('.hp', {opacity: 1})
+
     scene = new THREE.Scene()
-    camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 1, 1000)
-    renderer = new THREE.WebGLRenderer({ canvas })
+    camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 1, 300)
+    renderer = new THREE.WebGLRenderer({ canvas,
+        antialias: AA,
+        powerPreference: "high-performance"
+    })
     objectsToUpdate = []
-    world = new CANNON.World()
-    defaultMaterial = new CANNON.Material('default')
-
-    document.querySelector('body').style.backgroundColor = params.color
-    document.querySelector('.title').style.fontSize = '100px'
-
-    if (music.paused) music.play()
+    let blocksP
+    let blocksS
+    let cubeP
+    let cubeQ
+    let cubeV = new Float32Array([0,0,0])
+    let healthP = new Float32Array([0,0,0])
+    let sidesP = new Float32Array(6 * 3)
+    let sidesQ = new Float32Array(6 * 4)
+    let health;
+    gsap.to('.sound-toggle', .5, {opacity: 1})
+    if (mobile) gsap.to('#joystick', {opacity: .5})
+    else gsap.to('.controls-button', .25, {scale: 0, stagger: .05})
+    document.onkeydown = e => keyHandler(e.key)
+    if (music.paused && !soundOff && !isSafari) music.play()
+    if (isSafari) gsap.set('.wave', {scale: 0, transformOrigin: 'left center'})
 
     document.querySelector('.sound-toggle').onclick = () => 
         {
             if (music.paused) {
+                soundOff = false;
                 music.play()
                 gsap.to('.wave', .6, {scale: 1, transformOrigin: 'left center', stagger: .1})
             }
             else {
+                soundOff = true;
                 music.pause()
                 gsap.to('.wave', .6, {scale: 0, transformOrigin: 'left center', stagger: .1})
             }
         }
 
-    let gameSpeed = 2;
-    let complexity = 1.4;
-    camera.position.z = 20;
+    // const cameraZ = mobile ? 50 : 30
+    const cameraZ = 30
+    camera.position.z = cameraZ;
     camera.position.y = 10;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor( params.color, 1 )
+    renderer.setClearColor( '#000', 1 )
     resize()
     window.onresize = resize
     const stats = new Stats()
-    // document.body.appendChild( stats.dom );
-    gsap.to('.button, .glass, .title, .controls', {autoAlpha: 0})
-    gsap.to('.hp-active', {scale: 1, width: '100%'})
 
+    // document.body.appendChild( stats.dom );
+    gsap.to('.button, .best-score, .title', {autoAlpha: 0})
+    gsap.to('.hp-active', {scale: 1, width: '100%'})
 
     // Controls
     // const controls = new OrbitControls(camera, canvas)
@@ -100,9 +130,9 @@ function startGame() {
     // Light
     const ambient = new THREE.AmbientLight(0xffffff, 0.2)
     scene.add(ambient)
-    // Resize
 
-    const spotLight = new THREE.SpotLight(0xffffff, 1)
+    // Resize
+    const spotLight = new THREE.DirectionalLight(0xffffff, 1)
     spotLight.shadow.camera.near = 8;
     spotLight.shadow.camera.far = 40;
     spotLight.shadow.mapSize.width = 512;
@@ -113,61 +143,73 @@ function startGame() {
     spotLight.position.set(5,7.7,18);
     scene.add(spotLight)
 
+    // BG
+    const bgMat = new THREE.ShaderMaterial({
+        vertexShader: bgVertex,
+        fragmentShader: bgFragment,
+        uniforms: {
+            u_time: {value: 0},
+            u_cube_y: {value: 0}
+        },
+        side: THREE.BackSide
+    })
+
+    
+    // Background
+    const bg = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(100, 100, 100),
+        bgMat
+    )
+
+    bg.rotation.y = Math.PI / 2
+    scene.add(bg)
+
     // Fog
     {
-       
-        scene.fog = new THREE.Fog(params.color, params.fogNear, params.fogFar);
+        scene.fog = new THREE.Fog('#000', 5, 120);
     }
-    // Shadows
-
-
-    // Physic World
-    world.gravity.set(0, -9.82, 0)
-    world.broadphase - new CANNON.SAPBroadphase(world)
-    world.allowSleep = true
-
-    // Physical Materials
-
-    const defaultConcreteMaterial = new CANNON.ContactMaterial(
-        defaultMaterial,
-        defaultMaterial,
-        {
-            friction: 0.1,
-            restitution: .1
-        }
-    )
-    world.defaultContactMaterial = defaultConcreteMaterial
     const sides = []
     let lastBlock = 0;
 
 
-    const kill = () => {
-        cube.mesh.children.map((mesh,i) => {
-                const body = createBodyFromMesh(mesh)
-                const side = {body, mesh}
-                sides.push(side)
-                objectsToUpdate.push(side)
-                scene.attach(mesh);
-        })
-        bubbles.map(bubble => {
-            bubble.body.position.copy(cube.body.position)
-            bubble.body.velocity.y = 10
-            objectsToUpdate.push(bubble)
-        })
-        sides[0].body.velocity.y = 10
+    const kill = (smashed) => {
         document.querySelector('.hp-active').style.width ='0%'
-        document.querySelector('.title').innerText = 'WASTED'
-        document.querySelector('.button').innerText = 'PLAY AGAIN'
-
         wasted.currentTime = 0;
         wasted.volume = .5;
         wasted.play()
         cube.dead = true
         
         gsap.timeline({delay: 2})
-            .to('.glass', 1, {autoAlpha: .8})
+            .set('.cube', {autoAlpha: 1})
             .to('.title', 1, {autoAlpha: 1}, '<.2')
             .to('.button', 1, {autoAlpha: 1}, '<.2')
+
+
+        if (smashed) {
+        const pos = new THREE.Vector3(); // create once an reuse it
+        const quat = new THREE.Quaternion(); // create once an reuse it
+            cube.mesh.children.map((mesh,i) => {
+                mesh.getWorldPosition(pos)
+                mesh.getWorldQuaternion(quat)
+                sidesP[i * 3 + 0] = pos.x
+                sidesP[i * 3 + 1] = pos.y
+                sidesP[i * 3 + 2] = pos.z
+                sidesQ[i * 4 + 0] = quat._x
+                sidesQ[i * 4 + 1] = quat._y
+                sidesQ[i * 4 + 2] = quat._z
+                sidesQ[i * 4 + 3] = quat._w
+                sides.push(mesh)
+            })
+        sides.map(mesh => scene.attach(mesh))
+
+        bubbles.map((bubble,i) => {
+             bubblesP[i * 3 + 0] = cube.mesh.position.x
+             bubblesP[i * 3 + 1] = cube.mesh.position.y
+             bubblesP[i * 3 + 2] = cube.mesh.position.z
+             scene.add(bubble)
+        })
+    }
+
             
 
     }
@@ -179,49 +221,51 @@ function startGame() {
         .to(camera.rotation, 0.03, {z: '-=.01', y: '-=.01', x: '-=.01', repeat: 1, yoyo: true})
        
     }
-    const onCollide = (collision) => {
-        const block = blocks.find(block => block.body === collision.body)
-        if (!block || cube.dead) return
-        const impact = collision.contact.getImpactVelocityAlongNormal()
+
+    const onDamage = (damage, impact, lastBlock) => {
+        if (cube.health <= 0) return
         
-
-       
-        const sound = boxSounds[Math.floor(Math.random() * boxSounds.length)]
-        sound.currentTime = 0
-        sound.volume = Math.min(impact > 1 ? Math.abs(impact / 100) : 0, 1)
-        sound.play()
-
+        if (soundsPlaying < 10 && impact > 3) {
+            const sound = boxSounds[Math.floor(Math.random() * boxSounds.length)]
+            const volume = Math.min(Math.abs(impact / 50), 1)
+            sound.currentTime = 0
+            sound.volume = volume
+            sound.play()
+            soundsPlaying += 1 
+            setTimeout(() => soundsPlaying -= 1, sound.duration)
+        }
         
-        if (impact > 12 && block.id > 0) {
-           
-            
-            const damage = Math.floor((impact) * Math.pow(block.id - lastBlock, complexity))
-            shakeCamera()
-            if (damage > 0) document.getElementById('hp-damage').innerText = '-' + damage
-            gsap.fromTo('#hp-damage', 1, {opacity: 1, y: 0, scale: 1}, {opacity: 0, y: -100, scale: 1 + Math.min((damage / 300), 5)})
-            lastBlock = block.id
-            cube.health -= damage
-            if (cube.health > 0) document.querySelector('.hp-active').style.width = (cube.health / 10) + '%'
-            else {
-                kill()
-            }  
-        }
-
-        if (block.last && !cube.dead) {
-            cube.win = true
-            document.querySelector('.title').innerHTML = `YOU WIN!<br>BOX IS ${Math.round(cube.health / 1000 * 100)}% WHOLE`
-            document.querySelector('.title').style.fontSize = '50px'
-            document.querySelector('.button').innerText = 'PLAY AGAIN'
+        if (!damage) return
 
 
-            gsap.timeline({delay: 2})
-                .to('.glass, .title, .button', 1, {autoAlpha: 1, stagger: .3})
-        }
-        lastBlock = block.id
-    }
-   
+        shakeCamera()
+        
+        document.getElementById('hp-damage').innerText = '-' + damage
+
+        gsap.fromTo('#hp-damage', 1, {opacity: 1, y: 0, scale: 1, color: 'rgb(255,255,255)'}, {color: 'rgb(255, 0, 0)', opacity: 0, y: -100, scale: 1 + Math.min((damage / 300), 5)})
+        gsap.fromTo('.hp-active', {background: '#ff0000'}, {background: '#ffffff'})
+        cube.health -= damage
+        if (cube.health > 0) document.querySelector('.hp-active').style.width = (cube.health / 10) + '%'
+        else {
+            kill(true)
+        }  
     
-    const cube = new ComplexCube({
+        if (lastBlock === 39 && !cube.dead) {
+            cube.win = true
+            const score = Math.round(cube.health)
+            if ((localStorage.bestScore && Number(localStorage.bestScore) < score) || !localStorage.bestScore) {
+                localStorage.setItem('bestScore', score)
+            }
+            winSound.play()
+            document.querySelector('.score span').innerText = score;
+            gsap.set('.cube', {autoAlpha: 0})
+            gsap.timeline({delay: 2})
+                .to('.title, .score, .button', 1, {autoAlpha: 1, stagger: .3})
+        }
+        self.postMessage({damage})
+    }
+  
+    const cube = new Cube({
         width: 2,
         height: 2,
         depth: 2,
@@ -230,7 +274,6 @@ function startGame() {
             y: 7,
             z: 0
         },
-        onCollide,
         quaternion: new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(0,1,0), Math.random() * 180),
         mass: 100,
         material: new THREE.MeshStandardMaterial({
@@ -239,31 +282,31 @@ function startGame() {
         backgroundColor: 0
     })
 
-    const bubblesN = 40;
+    cubeP = new Float32Array(3)
+    cubeQ = new Float32Array(4)
+ 
+    const bubblesN = 40 ;
     const bubbles = []
     const bubbleMaterial = new THREE.MeshStandardMaterial({color: 'tomato'})
+    const bubbleGeometry =  new THREE.SphereBufferGeometry(0.15, 16, 16)
 
+    let bubblesP = new Float32Array(bubblesN * 3)
 
-  
     for (let i = 0; i < bubblesN; i++) {
-        const bubble = new Sphere({
-            radius: 0.01,
-            mass: 0.01,
-            position: {
-                x: 100,
-                z: 100,
-                y: 100
-            },
-            material: bubbleMaterial
-        })
-        bubble.mesh.scale.set(15,15,15)
-        scene.add(bubble.mesh)
+        const bubble = new THREE.Mesh(
+           bubbleGeometry,
+           bubbleMaterial
+        )
         bubbles.push(bubble)
     }
 
     spotLight.target = cube.mesh
     const blocks = []
     const blocksN = 40
+    blocksP = new Float32Array(blocksN * 3 )
+    blocksS = new Float32Array(blocksN * 3 )
+    
+
     let x = 0, y = 0, z = 0;
 
     const blockMaterial = new THREE.MeshStandardMaterial({
@@ -286,52 +329,80 @@ function startGame() {
             width = 50
             depth = 50,
             last = true
+            y -= 10
         }
+
         if (i === 0) {
             height = 20
             y = -10
         }
-        const block = new Block({
-            width: width, 
-            height: height, 
-            depth: depth, 
-            position: {x, y, z}, 
-            yIndex: (Math.random() - 0.5) * .1,
-            color: i < (blocksN - 1) ? '#222' : '#fff',
-            last,
-            material: last ? lastMaterial : blockMaterial,
-            type: 'block',
-            id: i
-        })
+        const block = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(width, height, depth),
+            (i === blocksN - 1) ? lastMaterial : blockMaterial
+        )
+
+        block.position.set(x,y,z)
+        block.castShadow = true 
+        block.receiveShadow = true 
+
+        if (i === 20) {
+            try {
+                health = new Health('#ff0000', 1)
+                gsap.to(health.rotation, 3, {y: Math.PI * 2, ease: 'linear', repeat: -1})
+                console.log(health.position)
+                block.add(health)
+                const healthWorldP = new THREE.Vector3()
+                health.position.set(width / 2 - 0.5, height / 2 + 3, depth / 2 - 0.5)
+                health.yShift = height / 2
+                health.xShift = width / 2 
+                health.zShift = depth / 2
+                health.getWorldPosition(healthWorldP)
+                console.log(healthWorldP, health.position)
+                healthP[0] = healthWorldP.x
+                healthP[1] = healthWorldP.y
+                healthP[2] = healthWorldP.z
+                
+            } catch (e) {console.log(e)}
+          
+        }
+
+        blocksP[i * 3 + 0] = x
+        blocksP[i * 3 + 1] = y
+        blocksP[i * 3 + 2] = z
+
+        blocksS[i * 3 + 0] = width
+        blocksS[i * 3 + 1] = height
+        blocksS[i * 3 + 2] = depth
+
         blocks.push(block)
-        objectsToUpdate.push(block)
-        scene.add(block.mesh)
+        scene.add(block)
     }
     scene.add(cube.mesh)
     objectsToUpdate.push(cube)
     const particlesGeometry = new THREE.BufferGeometry()
 
-    const count = 200000
-    
+    const count = mobile ? 100000 : 200000
+    const scales = new Float32Array(count * 1)
     const positions = new Float32Array(count * 3)
     
     for (let i = 0; i < count * 3; i ++) {
         positions[i] = (Math.random() - 0.5) * 500
+        scales[i] = Math.random()
     }
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    particlesGeometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1))
     
-    const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.2,
-        sizeAttenuation: true,
-        // map: particleTexture,
-        color: '#2c66cd',
-        transparent: true,
-        // alphaMap: particleTexture,
-        // alphaTest: .001,
-        // depthTest: false,
+    const particlesMaterial = new THREE.ShaderMaterial({
         depthWrite: false,
+        blending: THREE.AdditiveBlending,
         vertexColors: true,
-        blending: THREE.AdditiveBlending
+        vertexShader: particlesVertex,
+        fragmentShader: particlesFragment,
+        uniforms: {
+            uSize: { value: 30 * renderer.getPixelRatio()},
+            uTime: { value: 0 }
+        }
+
     })
     // Points
     const particles = new THREE.Points(particlesGeometry, particlesMaterial)
@@ -343,110 +414,215 @@ function startGame() {
     let oldElapsedTime = 0;
 
     let keyPressed = false;
-    let force = 6;
+    let force = mobile ? 3 : 4;
+    const timeStep = 1 / 60
 
+    const keyHandler = (key) => {
+        if (keyPressed || cube.dead || cube.win) return
+        keyPressed = true
+        if (/^(a|ф|ArrowLeft)$/i.test(key))  cubeV[0] = -force
+        if (/^(d|в|ArrowRight)$/i.test(key)) cubeV[0] = force
+        if (/^(w|ц|ArrowUp)$/i.test(key)) cubeV[2] = -force
+        if (/^(s|ы|ArrowDown)$/i.test(key)) cubeV[2] = force
+        setTimeout(() => keyPressed = false, 10)
+    }
+
+    document.onkeyup = () => {
+        cubeV[0] = 0
+        cubeV[1] = 0
+        cubeV[2] = 0
+    }
+
+    document.querySelector('.button').onclick = () => {
+        scene.children.map(c => scene.remove(c))
+        gsap.to('.button, .score, .title', {autoAlpha: 0})
+        cancelAnimationFrame(loop)
+        startGame()
+    }
+
+
+    // Worker
+
+    // Create worker
+    if (window.worker) {
+        clearTimeout(workerProcess)
+        window.worker.terminate();
+        delete window.worker;
+    }
+    window.worker = new Worker(new URL('./worker.js', import.meta.url));
+
+    // Time when we sent last message
+    let sendTime;
+
+    // Send the array buffers that will be populated in the
+    // worker with cannon.js' data
+    function requestDataFromWorker() {
+        sendTime = performance.now()
+        worker.postMessage(
+            {
+            timeStep,
+            blocksP,
+            blocksS,
+            cubeP,
+            cubeQ,
+            cubeV,
+            sidesP,
+            sidesQ,
+            bubblesP,
+            healthP,
+            elapsedTime,
+            dead: cube.dead
+            },
+            // Specify that we want actually transfer the memory, not copy it over. This is faster.
+            // [blocksP.buffer, cubeP.buffer, cubeQ.buffer, sidesP.buffer, sidesQ.buffer, bubblesP.buffer]
+        )
+    }
+
+    // The mutated position and quaternion data we
+    // get back from the worker
+    worker.addEventListener('message', (event) => {
+        if ('health' in event.data && !cube.healed) {
+            console.log('health taken')
+            health.parent.remove(health)
+            cube.health = 1000
+            cube.healed = true
+            healedSound.play()
+            document.querySelector('.hp-active').style.width = '100%'
+        } else if ('damage' in event.data) {
+            const {damage, impact, lastBlock} = event.data
+            onDamage(damage, impact, lastBlock)
+        } else {
+            blocksP = event.data.blocksP    
+            cubeP = event.data.cubeP
+            cubeQ = event.data.cubeQ
+            const healthWorldP = new THREE.Vector3()
+            health.getWorldPosition(healthWorldP)
+
+            healthP[0] = healthWorldP.x
+            healthP[1] = healthWorldP.y
+            healthP[2] = healthWorldP.z
+            // healthP = event.data.healthP
+            if (cube.dead) {
+                sidesP = event.data.sidesP.some(i => i > 0) ? event.data.sidesP : sidesP
+                sidesQ = event.data.sidesQ.some(i => i > 0) ?  event.data.sidesQ : sidesQ
+            }
+
+            bubblesP = event.data.bubblesP.some(i => i > 0) ? event.data.bubblesP : bubblesP
+           
+            // Update the three.js meshes
+            for (let i = 0; i < blocks.length; i++) {
+                blocks[i].position.set(blocksP[i * 3 + 0], blocksP[i * 3 + 1], blocksP[i * 3 + 2])
+            }
+            if (cube.dead && sides.length) {
+                for (let i = 0; i < bubbles.length; i++) {
+                    bubbles[i].position.set(bubblesP[i * 3 + 0], bubblesP[i * 3 + 1], bubblesP[i * 3 + 2])
+                }
+                for (let i = 0; i < 6; i++) {
+                    sides[i].position.set(sidesP[i * 3 + 0], sidesP[i * 3 + 1], sidesP[i * 3 + 2])
+                    sides[i].quaternion.set(sidesQ[i * 4 + 0], sidesQ[i * 4 + 1], sidesQ[i * 4 + 2], sidesQ[i * 4 + 3])
+                }
+            }
+           
+            cube.mesh.position.set(cubeP[0], cubeP[1], cubeP[2])
+            cube.mesh.quaternion.set(cubeQ[0], cubeQ[1], cubeQ[2], cubeQ[3])
+            
+
+            const delay = timeStep * 1000 - (performance.now() - sendTime)
+            workerProcess = setTimeout(requestDataFromWorker, Math.max(delay, 0))
+        }
+    })
+
+    worker.addEventListener('error', (event) => {
+        console.error(event.message)
+    })
+
+    requestDataFromWorker()
+
+   
 
     const followCube = () => {
-        if (!camera.shake) camera.position.set(cube.mesh.position.x, cube.mesh.position.y + 10, cube.mesh.position.z + 30)
+        if (!camera.shake) camera.position.set(cube.mesh.position.x, cube.mesh.position.y + 10, cube.mesh.position.z + cameraZ)
         if (!camera.shake) camera.lookAt(cube.mesh.position)
         spotLight.position.set(cube.mesh.position.x + 10, cube.mesh.position.y + 10,  cube.mesh.position.z + 5)
+        bg.position.y = cube.mesh.position.y
+        bg.position.z = cube.mesh.position.z - 50
+
     }
     const tick = () => {
+        const start = performance.now()
         loop = requestAnimationFrame(tick) 
         elapsedTime = clock.getElapsedTime()
         const deltaTime = elapsedTime - oldElapsedTime
         oldElapsedTime = elapsedTime
 
-       
+        bgMat.uniforms.u_time.value = elapsedTime
+        if (!cube.dead) bgMat.uniforms.u_cube_y.value = cube.mesh.position.y
         particles.position.y -= 0.01
         particles.rotation.y = elapsedTime * 0.05
         particles.rotation.z = elapsedTime * 0.05
 
-    if ((cube.body.velocity.x + cube.body.velocity.y + cube.body.velocity.z) === 0) cube.body.applyImpulse(new CANNON.Vec3(0,0,0))
+       if (joystick && joystick.getDir()) keyHandler(joystick.getDir())
 
-    if (!cube.dead) {
-        const colorNumber = Math.abs(Math.floor(cube.body.position.y * .01))
-        if (colorNumber > cube.backgroundColor) {
-            cube.backgroundColor = colorNumber
-            gsap.to('body', 3, {backgroundColor: colors[colorNumber], onUpdate: function() {
-                renderer.setClearColor(this.targets()[0].style.backgroundColor)
-                scene.fog.color = new THREE.Color(this.targets()[0].style.backgroundColor)
-            }})
-        }
-        if (cube.body.position.y < blocks[blocksN - 1].body.position.y - 30) kill()
-            blocks.map((block,i) => {
-                if (block.last || i === 0) return
-                block.body.position.y += Math.sin((elapsedTime * .6) - block.yIndex) * block.yIndex * 2
-                block.body.position.x += Math.cos((elapsedTime * .6) - block.yIndex) * block.yIndex * 2
-                block.body.position.z += Math.sin((elapsedTime * .6) - block.yIndex) * block.yIndex * 0
-            })
+       if (cube.mesh.position.y < (blocksP.slice(-2)[0] - 20) && !cube.dead && !cube.win) kill()
 
+
+        if (!cube.dead) {
             followCube()
-        } else {
-        camera.lookAt(cube.mesh.position)
-        camera.position.x += Math.sin(elapsedTime * .1) * .1 
-        camera.position.z += Math.cos(elapsedTime * .1) * .1
+
+            } else {
+                camera.position.x += Math.sin(elapsedTime * .1) * .1 
+                camera.position.z += elapsedTime * .03
+            }
+        if (cube.win) {
+            // cube.mesh.rotation.y = elapsedTime
+            // cube.mesh.position.y = '-=.05'
+
         }
-
-    if (cube.win) {
-        blocks.map(block => {if (!block.last) block.body.position.y += 1})
-        world.gravity.y = -1
-        cube.body.velocity.x = 0
-        cube.body.velocity.z = 0
-        cube.body.velocity.y = 4
-
-        cube.mesh.rotation.y = elapsedTime
-    }
-    limitBodyVelocity(cube.body, 25)
-    objectsToUpdate.map(object => {
-        object.mesh.position.copy(object.body.position)
-        object.mesh.quaternion.copy(object.body.quaternion)
-        if (bubbles.includes(object)) object.mesh.position.y += 0.2
-    })
-
+    
 
 
     stats.update()
     
-    world.step(1/60, deltaTime * gameSpeed, 3)
+    // world.step(1/60, deltaTime * gameSpeed, 1)
     // controls.update()
     renderer.render(scene, camera)
-    showMessage(Math.round(cube.body.velocity.x) + ',' + Math.round(cube.body.velocity.y) + ',' +Math.round(cube.body.velocity.z) )
-
-
-
-    }
-
-    document.onkeydown = e => {
-        if (keyPressed || cube.dead || cube.win || Math.abs(cube.body.velocity.y) > 3) return
-        keyPressed = true
-        cube.body.applyImpulse(new CANNON.Vec3(0,0,0))
-        if (/^(a|ф|ArrowLeft)$/i.test(e.key)) cube.body.velocity.x = -force
-        if (/^(d|в|ArrowRight)$/i.test(e.key)) cube.body.velocity.x = force
-        if (/^(w|ц|ArrowUp)$/i.test(e.key)) cube.body.velocity.z = -force
-        if (/^(s|ы|ArrowDown)$/i.test(e.key)) cube.body.velocity.z = force
-    }
-
-
-    document.onkeyup = () => keyPressed = false
-
-    document.querySelector('.button').onclick = () => {
-        scene.children.map(c => scene.remove(c))
-        world.bodies.map(body => body = null)
-        world = new CANNON.World()
-        gsap.to('.button, .glass, .title', {autoAlpha: 0})
-        cancelAnimationFrame(loop)
-        startGame()
+    const end = performance.now()
+    // showMessage(Math.round((end - start)))
     }
 
     tick()
 }
+
 document.addEventListener('DOMContentLoaded', ()=> {
     document.querySelector('.button').onclick = startGame
-    document.querySelector('.controls').style.backgroundImage = `url(${controlsImage})`
+    if (isMobile()) {
+        joystick = new JoyStick('joyDiv');
+        Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
+
+    } else {
+        document.querySelector('#joyDiv').style.display = 'none'
+    }
+    if (localStorage.bestScore) {
+        document.querySelector('.best-score span').innerText = localStorage.bestScore
+        gsap.fromTo('.best-score', {opacity: 0, y: 25}, {opacity: 1, y: 0, delay: .3})
+    } else {
+        gsap.set('.best-score', {opacity: 0, delay: .3})
+    }
+    gsap.to('.cube', 8, {rotateY: 360, rotateX: 360, repeat: -1, ease: 'linear'})
+    gsap.to('.title img', 25, {rotate: 360, ease: 'linear', repeat: -1})
+    document.querySelector('.title img').setAttribute('src', titleImage)
+    document.querySelector('.button img').setAttribute('src', startImage)
+    document.querySelector('.full-screen img').setAttribute('src', fullScreenImage)
+    document.querySelector('.full-screen').onclick = () => {
+        if (!document.fullscreenElement) {
+            openFullscreen()
+        }
+        else {
+            closeFullscreen()
+        }
+    }
     gsap.timeline()
-        .set('.title', {fontSize: '100px'})
-        .fromTo('.title, .button', 1, {y: 25, opacity: 0} ,{ opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .5})
-        .to('.controls', 1, {opacity: .3})
+        .fromTo('.title, .button', 1, {y: 25, opacity: 0} ,{ opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
+        .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
 })
 

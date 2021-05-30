@@ -1,9 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap');
+@font-face {
+    font-family: 'Arial Black';
+    src: url("assets/fonts/arial_black.ttf");
+}
 
 body, html {
     margin: 0;
-    background: #555;
+    background: #fff;
     overflow: hidden;
+    font-family: 'Chakra Petch', sans-serif;
+    box-sizing: border-box;
 }
 .webgl {
     width: 0;
@@ -12,17 +18,20 @@ body, html {
 .hp {
     width: 300px;
     height: 30px;
-    border: 1px solid black;
+    border: 2px solid white;
     overflow: hidden;
     border-radius: 7px;
     position: fixed;
     right: 20px;
     top: 20px;
+    opacity: 0;
 }
+
+
 .hp-active {
     width: 100%;
     height: 100%;
-    background: red;
+    background: white;
     transition: width .4s ease-out;
     transform-origin: right center;
     transform: scale(0);
@@ -34,7 +43,6 @@ body, html {
     position: fixed;
     left: 0;
     top: 40%;
-
     opacity: 0;
 }
 .glass {
@@ -45,45 +53,67 @@ body, html {
     top: 0;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    background: rgba(0,0,0,.8)
+    background: rgba(252, 204, 204, 0)
 }
-
+.full-screen {
+    width: 50px;
+    height: 30px;
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+}
+.full-screen img {
+    width: 100%;
+}
 .button {
     position: fixed;
-    width: 400px;
-    height: 100px;
-    background: rgba(255,0,0,1);
-    box-shadow: 0 5px 25px rgba(170, 12, 12, 0.2);
-    color: rgb(255, 213, 213);
-    font-family: "Chakra Petch", sans-serif;
-    font-size: 20px;
+    width: 150px;
+    height: 50px;
     letter-spacing: 15px;
-    left: calc(50% - 200px);
-    top: 50%;
-    -webkit-backdrop-filter: blur(15px);
-    backdrop-filter: blur(15px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: .1s;
-    opacity: 0;
+    left: calc(50% - 75px);
+    top: 66%;
+    background-size: cover;
 }
-.button:hover {
-    box-shadow: 0 5px 25px rgba(255, 0, 0, 0.43);
-}
+
 
 .title {
     position: fixed;
-    width: 100%;
-    text-align: center;
-    font-size: 100px;
-    top: 30%;
-    left: 0;
+    width: 300px;
+    height: 300px;
+    top: 10%;
+    left: calc(50% - 150px);
+    perspective: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
 }
+.title-image {
+    position: absolute;
+}
+  
+.cube {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    transform-style: preserve-3d;
+}
+  
+.cube__face {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: #333;
+/* filter: drop-shadow(0 0 15px rgba(0,0,0,.5)) */
+}
+.cube__face--front  { transform: rotateY(  0deg) translateZ(30px); background: #111}
+.cube__face--right  { transform: rotateY( 90deg) translateZ(30px); background: #111}
+.cube__face--back   { transform: rotateY(180deg) translateZ(30px); background: #111}
+.cube__face--left   { transform: rotateY(-90deg) translateZ(30px); background: #222}
+.cube__face--top    { transform: rotateX( 90deg) translateZ(30px); background: #252525}
+.cube__face--bottom { transform: rotateX(-90deg) translateZ(30px); background: #333}
 
 .red-type {
-    font-family: 'Chakra Petch', sans-serif;
     color: red;
 }
 
@@ -91,7 +121,7 @@ body, html {
     width: 100%;
     height: 100%;
     position: absolute;
-    box-shadow: inset 0 0 150px rgba(0,0,0,.5);
+    box-shadow: inset 0 0 150px rgba(0,0,0,0);
     pointer-events: none;
 }
 
@@ -101,15 +131,92 @@ body, html {
     position: fixed;
     left: 20px;
     top: 20px;
+    opacity: 0;
 }
 
 .controls {
     width: 400px;
     left: calc(50% - 200px);
-    top: 65%;
-    opacity: .1;
-    height: 250px;
+    bottom: 0%;
+    height: 150px;
     position: absolute;
+    z-index: 50;
     background-size: cover;
+}
+.row {
+    width: 50%;
+    margin-left: 25%;
+    display: flex;
+    justify-content: space-between;
+}
+.row:first-child {
+    justify-content: center;
+}
+.controls-button {
+    width: 50px;
+    height: 50px;
+    margin: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background: #000;
+    border-radius: 3px;
     opacity: 0;
+}
+
+#joystick {
+    opacity: 0;
+}
+
+.score, .best-score {
+    position: absolute;
+    width: 300px;
+    height: 60px;
+    top: 38%;
+    left: calc(50% - 150px);
+    color: white;
+    font-family: 'Arial Black';
+    font-size: 30px;
+    line-height: 30px;
+    text-align: center;
+    opacity: 0;
+}
+.best-score {
+    position: fixed;
+    top: 1%;
+    font-size: 15px;
+    color: black;
+    opacity: 1;
+}
+.score span {
+    line-height: 50px;
+    font-size: 60px;
+}
+.best-score span {
+    font-size: 30px;
+
+}
+
+
+@media screen and (max-width: 700px) {
+    .title, .controls {
+        left: 20%;
+        width: 60%;
+    }
+    .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .title {
+        font-size: 52px !important;
+    }
+    .button {
+        height: 10%;
+    }
+    .hp {
+        width: 60%;
+    }
+   
 }

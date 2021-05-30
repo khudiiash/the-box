@@ -12,12 +12,25 @@
     <div class='hp'>
         <div class="hp-active"></div>
     </div>
-    <div class="hp-damage red-type" id='hp-damage'>-140</div>
-    <div class="glass"></div>
-    <div class="title red-type">THE BOX</div>
-    <div class="vignette"></div>
+    <div class="hp-damage" id='hp-damage'>-140</div>
+    <!-- <div class="glass"></div> -->
+    <div class="best-score">BEST SCORE<br><span></span></div>
+    <div class="title">
+        <img class='title-image' alt="" width='300px' height="300px">
+        <div class="score">SCORE<br><span>346</span></div>
+        <div class="cube">
+            <div class="cube__face cube__face--front"></div>
+            <div class="cube__face cube__face--back"></div>
+            <div class="cube__face cube__face--right"></div>
+            <div class="cube__face cube__face--left"></div>
+            <div class="cube__face cube__face--top"></div>
+            <div class="cube__face cube__face--bottom"></div>
+          </div>
+    </div>
     <canvas class='webgl'></canvas>
-    <div class="button">PLAY</div>
+    <div class="button">
+        <img class='button-image' alt="">
+    </div>
     <div class="sound-toggle">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1359.14 1190.35">
             <defs>
@@ -49,7 +62,21 @@
             </g>
         </svg>
     </div>
-    <div class="controls"></div>
+    <div class='full-screen'>
+        <img class='full-screen-image' alt="">
+    </div>
+    <div class="controls">
+        <div class="row">
+            <div class="controls-button up">W</div>
+        </div>
+        <div class="row">
+            <div class="controls-button left">A</div>
+            <div class="controls-button down">S</div>
+            <div class="controls-button right">D</div>
+        </div>
+        <div id="joyDiv" style="width:150px;height:150px;margin:0;"></div>
+    </div>
+    
 
 </body>
 

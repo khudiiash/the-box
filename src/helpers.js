@@ -66,6 +66,7 @@ export const createBodyFromMesh = (mesh) => {
 }
 
 export const showMessage = (message) => {
+    if (!message) return
     if (Math.floor(elapsedTime) > nam) {
         console.log(message)
         nam = Math.floor(elapsedTime)
@@ -83,4 +84,43 @@ export const limitBodyVelocity = (body, limit) => {
 
 }
 
+export const isMobile = () => {
+    const toMatch = [
+        /Android/i,
+        /webOS/i,
+        /iPhone/i,
+        /iPad/i,
+        /iPod/i,
+        /BlackBerry/i,
+        /Windows Phone/i
+    ];
 
+    return toMatch.some((toMatchItem) => {
+        return navigator.userAgent.match(toMatchItem);
+    });
+}
+
+/* View in fullscreen */
+export function openFullscreen() {
+    const body = document.querySelector('body')
+    console.log(body)
+    if (body.requestFullscreen) {
+      body.requestFullscreen();
+    } else if (body.webkitRequestFullscreen) { /* Safari */
+      body.webkitRequestFullscreen();
+    } else if (body.msRequestFullscreen) { /* IE11 */
+      body.msRequestFullscreen();
+    }
+  }
+  
+  /* Close fullscreen */
+export function closeFullscreen() {
+
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { /* Safari */
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { /* IE11 */
+      document.msExitFullscreen();
+    }
+  }
