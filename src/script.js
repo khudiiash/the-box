@@ -72,6 +72,14 @@ function startGame() {
     gsap.set('img, .cube__face', {webkitFilter: 'invert(100%)', filter: 'invert(100%)'})
     gsap.to('.hp', {opacity: 1})
 
+
+    if (isMobile()) {
+        joystick = new JoyStick('joyDiv');
+        Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
+    } else {
+        document.querySelector('#joyDiv').style.display = 'none'
+    }
+
     scene = new THREE.Scene()
     camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 1, 300)
     renderer = new THREE.WebGLRenderer({ canvas,
@@ -349,7 +357,6 @@ function startGame() {
             try {
                 health = new Health('#ff0000', 1)
                 gsap.to(health.rotation, 3, {y: Math.PI * 2, ease: 'linear', repeat: -1})
-                console.log(health.position)
                 block.add(health)
                 const healthWorldP = new THREE.Vector3()
                 health.position.set(width / 2 - 0.5, height / 2 + 3, depth / 2 - 0.5)
@@ -357,7 +364,6 @@ function startGame() {
                 health.xShift = width / 2 
                 health.zShift = depth / 2
                 health.getWorldPosition(healthWorldP)
-                console.log(healthWorldP, health.position)
                 healthP[0] = healthWorldP.x
                 healthP[1] = healthWorldP.y
                 healthP[2] = healthWorldP.z
@@ -482,7 +488,6 @@ function startGame() {
     // get back from the worker
     worker.addEventListener('message', (event) => {
         if ('health' in event.data && !cube.healed) {
-            console.log('health taken')
             health.parent.remove(health)
             cube.health = 1000
             cube.healed = true
@@ -601,16 +606,13 @@ function ready(fn) {
   
 ready(function() {
     document.querySelector('.button').onclick = startGame
-    if (isMobile()) {
-        joystick = new JoyStick('joyDiv');
-        Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
-        } else {
-            document.querySelector('#joyDiv').style.display = 'none'
-        }
+   
         if (localStorage.bestScore) {
             document.querySelector('.best-score span').innerText = localStorage.bestScore
             gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
         } 
+        if (isMobile()) Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
+
         gsap.to('.cube', 8, {rotateY: 360, rotateX: 360, repeat: -1, ease: 'linear'})
         gsap.to('.title img', 25, {rotate: 360, ease: 'linear', repeat: -1})
         document.querySelector('.title img').setAttribute('src', titleImage)
