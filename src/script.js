@@ -593,7 +593,8 @@ function startGame() {
     tick()
 }
 
-document.addEventListener('DOMContentLoaded', ()=> {
+
+window.onload = function() {
     document.querySelector('.button').onclick = startGame
     if (isMobile()) {
         joystick = new JoyStick('joyDiv');
@@ -620,9 +621,9 @@ document.addEventListener('DOMContentLoaded', ()=> {
         }
     }
     if (mobile) gsap.set('.full-screen', {opacity: 0})
-   
-})
-gsap.timeline()
-    .fromTo('.title, .button', 1, {y: 25, opacity: 0}, { opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
-    .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
+    gsap.timeline()
+        .fromTo('.title, .button', 1, {y: 25, opacity: 0}, { opacity: 1, autoAlpha: 1, y: 0, delay: 1, stagger: .3})
+        .fromTo('.controls-button', .3, {scale: 0, opacity: 0}, {opacity: 1, scale: 1, stagger: .05}, '<.5')
+}
+
 
