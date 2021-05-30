@@ -568,6 +568,11 @@ function startGame() {
         particles.rotation.z = elapsedTime * 0.05
 
        if (joystick && joystick.getDir()) keyHandler(joystick.getDir())
+       if (joystick && !joystick.getDir()) {
+            cubeV[0] = 0
+            cubeV[1] = 0
+            cubeV[2] = 0
+       }
 
        if (cube.mesh.position.y < (blocksP.slice(-2)[0] - 20) && !cube.dead && !cube.win) kill()
 
