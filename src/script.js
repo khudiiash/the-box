@@ -414,7 +414,7 @@ function startGame() {
     let oldElapsedTime = 0;
 
     let keyPressed = false;
-    let force = 4;
+    let force = mobile ? 3 : 4;
     const timeStep = 1 / 60
 
     const keyHandler = (key) => {
