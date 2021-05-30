@@ -428,7 +428,7 @@ function startGame() {
         if (keyPressed || cube.dead || cube.win) return
         keyPressed = true
         console.log(key)
-        if (/(w|ф|ArrowLeft)/i.test(key))  cubeV[0] = -force
+        if (/(a|ф|ArrowLeft)/i.test(key))  cubeV[0] = -force
         if (/(d|в|ArrowRight)/i.test(key)) cubeV[0] = force
         if (/(w|ц|ArrowUp)/i.test(key)) cubeV[2] = -force
         if (/(s|ы|ArrowDown)/i.test(key)) cubeV[2] = force
