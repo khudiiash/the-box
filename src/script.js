@@ -607,10 +607,10 @@ function ready(fn) {
   
 ready(function() {
     document.querySelector('.button').onclick = startGame
-   
+
         if (localStorage.bestScore) {
             document.querySelector('.best-score span').innerText = localStorage.bestScore
-            gsap.to('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
+            gsap.fromTo('.best-score', {y: 25}, {opacity: 1, y: 0, delay: .3})
         } 
         if (isMobile()) Array.from(document.querySelectorAll('.controls .row')).map(row => row.remove())
 
