@@ -179,7 +179,7 @@ body, html {
     font-size: 30px;
     line-height: 30px;
     text-align: center;
-    opacity: 0;
+    /* opacity: 0; */
 }
 .best-score {
     position: fixed;
@@ -206,18 +206,19 @@ body, html {
         left: calc(50% - 120px);
         width: 240px;
         height: 240px;
-        top: 20%;
+        top: 10%;
     }
     .controls {
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    .score span {
-        font-size: 25px;
+    .score {
+        font-size: 20px;
     }
     .score span {
-        font-size: 30px;
+        line-height: 30px;
+        font-size: 40px;
     }
     
     .button {

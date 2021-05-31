@@ -63,7 +63,7 @@ const defaultConcreteMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
     {
         friction: 1,
-        restitution: .01,
+        restitution: 0,
         contactEquationRelaxation: 4,
         frictionEquationRelaxation: 1
     }
@@ -91,7 +91,7 @@ cube.addEventListener('collide', onCollide)
 const health = new CANNON.Body({mass: 0, shape: new CANNON.Box(new CANNON.Vec3(.5, .5, .5))})
 world.addBody(health)
 self.addEventListener('message', (event) => {
-    if (win && world.gravity.y < 0) world.gravity.y = 1
+    if (win && world.gravity.y < 0) world.gravity.y = 0.3
     const { blocksP, blocksS, cubeP, cubeQ, cubeV, sidesP, sidesQ, bubblesP, healthP, timeStep, elapsedTime } = event.data
     if (!blocks.length) {
         for (let i = 0; i < N; i++) {
@@ -187,6 +187,7 @@ self.addEventListener('message', (event) => {
         if (i === (N - 1) || i === 0) return
         if (win) {
             block.position.y += 4 - i * .1
+
         } else {
             block.position.y += Math.sin((elapsedTime * .6) - yIndeces[i]) * yIndeces[i] * 2 * .7
             block.position.x += Math.cos((elapsedTime * .6) - yIndeces[i]) * yIndeces[i] * 2 * .7

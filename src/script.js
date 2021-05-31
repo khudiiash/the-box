@@ -71,6 +71,7 @@ function startGame() {
 
     gsap.set('img, .cube__face', {webkitFilter: 'invert(100%)', filter: 'invert(100%)'})
     gsap.to('.hp', {opacity: 1})
+    gsap.set('.cube, .title, .button, .score, .best-score', {autoAlpha: 0})
 
 
     if (isMobile() && !joystick) {
@@ -170,7 +171,7 @@ function startGame() {
         bgMat
     )
 
-    bg.rotation.y = Math.PI / 2
+    // bg.rotation.y = Math.PI / 2
 
 
     scene.add(bg)
@@ -570,7 +571,7 @@ function startGame() {
         particles.rotation.y = elapsedTime * 0.05
         particles.rotation.z = elapsedTime * 0.05
 
-        bg.rotation.y = elapsedTime * .05
+        bg.rotation.z = elapsedTime * .05
 
        if (joystick && joystick.getDir()) keyHandler(joystick.getDir())
        if (joystick && !joystick.getDir()) {
